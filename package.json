@@ -1,0 +1,29 @@
+{
+  "name": "serverless-cors-plugin",
+  "version": "0.0.1",
+  "description": "Serverless CORS Plugin - Managing Cross-origin resource sharing (CORS) policies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:joostfarla/serverless-cors-plugin.git"
+  },
+  "keywords": [
+    "serverless",
+    "aws",
+    "lambda",
+    "cors"
+  ],
+  "author": "Joost Farla <joost@apiwise.nl>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joostfarla/serverless-cors-plugin/issues"
+  },
+  "homepage": "https://github.com/joostfarla/serverless-cors-plugin#readme",
+  "dependencies": {
+    "bluebird": "^3.1.1",
+    "lodash": "^3.10.1"
+  }
+}
