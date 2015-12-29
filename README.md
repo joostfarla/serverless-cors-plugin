@@ -4,7 +4,7 @@
 
 ## Introduction
 
-A Serverless Module for the [Serverless Framework](http://www.serverless.com) which
+A Serverless Plugin for the [Serverless Framework](http://www.serverless.com) which
 adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)).
 
 This plugins does the following:
