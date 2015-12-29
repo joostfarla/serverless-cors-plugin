@@ -14,11 +14,13 @@ This plugins does the following:
 
 * It will add an `OPTIONS` preflight endpoint with the proper headers for all
   resources with a CORS-policy configured. The following headers will be returned
-  (if configured): `Access-Control-Allow-Origin`, `Access-Control-Allow-Headers`,
+  (if configured): `Access-Control-Allow-Origin`, `Access-Control-Allow-Headers` and
   `Access-Control-Allow-Methods` (the last one will be set automatically, based
   on the methods which have a CORS-policy configured).
 
 ## Installation
+
+Make sure you have a `package.json` file in your `plugins` dir. If it's not there, run `npm init` to generate one.
 
 From your `plugins` dir, run:
 
