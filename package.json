@@ -1,10 +1,10 @@
 {
   "name": "serverless-cors-plugin",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Serverless CORS Plugin - Managing Cross-origin resource sharing (CORS) policies",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,11 @@
   "dependencies": {
     "bluebird": "^3.1.1",
     "lodash": "^3.10.1"
+  },
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "chai-as-promised": "^5.2.0",
+    "mocha": "^2.3.4",
+    "serverless": "0.0.15"
   }
 }

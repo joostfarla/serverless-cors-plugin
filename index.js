@@ -7,6 +7,7 @@ module.exports = function(SPlugin, serverlessPath) {
   const _ = require('lodash'),
     path = require('path'),
     Promise = require('bluebird'),
+    SError = require(path.join(serverlessPath, 'ServerlessError')),
     SUtils = require(path.join(serverlessPath, 'utils'));
 
   class ServerlessCors extends SPlugin {
@@ -19,12 +20,12 @@ module.exports = function(SPlugin, serverlessPath) {
     }
 
     registerHooks() {
-      this.S.addHook(this._addCorsHeaders.bind(this), {
+      this.S.addHook(this.addCorsHeaders.bind(this), {
         action: 'endpointBuildApiGateway',
         event:  'pre'
       });
 
-      this.S.addHook(this._addPreflightRequests.bind(this), {
+      this.S.addHook(this.addPreflightRequests.bind(this), {
         action: 'endpointDeploy',
         event:  'post'
       });
@@ -32,38 +33,37 @@ module.exports = function(SPlugin, serverlessPath) {
       return Promise.resolve();
     }
 
-    _addCorsHeaders(evt) {
-      let responseParameters = {},
-        options = this._getEndpointPolicy(evt.endpoint);
-
-      // Skip when no CORS policy is defined
-      if (!options.allow) {
-        return Promise.resolve(evt);
-      }
+    addCorsHeaders(evt) {
+      let policy,
+        responseParameters = {};
 
       // Capture region object for preflight endpoints
       this.context = evt.region;
 
-      if (options.allow.origin) {
-        responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + options.allow.origin + '\'';
-      }
-
-      // Skip when no response headers have to be set
-      if (_.size(responseParameters) === 0) {
+      // Skip when CORS is not enabled
+      if (!this._isCorsEnabled(evt.endpoint)) {
         return Promise.resolve(evt);
       }
 
-      // Set appropriate headers on the response
+      try {
+        policy = this._getEndpointPolicy(evt.endpoint);
+      } catch (err) {
+        return Promise.reject(err);
+      }
+
+      // Set allow-origin header on all responses
       _.each(evt.endpoint.responses, function(response) {
-        response.responseParameters = _.merge(
-          responseParameters, response.responseParameters
-        );
+        if (!response.responseParameters) {
+          response.responseParameters = {};
+        }
+
+        response.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + policy.allowOrigin + '\'';
       });
 
       return Promise.resolve(evt);
     }
 
-    _addPreflightRequests(evt) {
+    addPreflightRequests(evt) {
       let config = {
         region: this.context.region,
         accessKeyId: this.S._awsAdminKeyId,
@@ -85,12 +85,26 @@ module.exports = function(SPlugin, serverlessPath) {
         .then(this._deployApi);
     }
 
+    _isCorsEnabled(endpoint) {
+      return !_.isUndefined(endpoint.module.custom.cors) || !_.isUndefined(endpoint.function.custom.cors);
+    }
+
     _getEndpointPolicy(endpoint) {
-      return _.merge({},
+      let policy = _.merge({},
         endpoint.module.custom.cors,
         endpoint.function.custom.cors
       );
+
+      if (_.isUndefined(policy.allowOrigin)) {
+        throw new SError(
+          'CORS policy requires a value for "allowOrigin"',
+          SError.errorCodes.INVALID_PROJECT_SERVERLESS
+        );
+      }
+
+      return policy;
     }
+
     _getApiResources(evt) {
       let params = {
         restApiId: this.context.restApiId,
@@ -121,35 +135,41 @@ module.exports = function(SPlugin, serverlessPath) {
 
       // Generate method objects
       // @todo how do we handle hard-specified OPTIONS requests?
-      evt.preflightEndpoints = paths.reduce(function(result, path) {
-        let endpoints = _.filter(evt.endpoints, { path: path });
+      try {
+        evt.preflightEndpoints = paths.reduce(function(result, path) {
+          let endpoints = _.filter(evt.endpoints, { path: path });
 
-        _.forEach(endpoints, function(endpoint) {
-          let options = _this._getEndpointPolicy(endpoint);
-          let resource = _.findWhere(evt.resources, { path: '/' + path });
+          _.forEach(endpoints, function(endpoint) {
+            let policy,
+              resource = _.findWhere(evt.resources, { path: '/' + path });
 
-          // Do nothing when no CORS policy or no API resource is found
-          if (!options.allow || !resource) {
-            return result;
-          }
+            // Skip when resource is not found or CORS is not enabled
+            if (!resource || !_this._isCorsEnabled(endpoint)) {
+              return;
+            }
 
-          if (!result[path]) {
-            result[path] = {
-              path: path,
-              resource: resource,
-              allow: options.allow // @todo handle conflicts with endpoints within same path
-            };
-          }
+            policy = _this._getEndpointPolicy(endpoint);
 
-          if (!result[path].allow.methods) {
-            result[path].allow.methods = [];
-          }
+            if (!result[path]) {
+              // @todo handle conflicts with endpoints within same path
+              result[path] = _.merge(policy, {
+                path: path,
+                resource: resource
+              });
+            }
 
-          result[path].allow.methods.push(endpoint.method);
-        });
+            if (!result[path].allowMethods) {
+              result[path].allowMethods = [];
+            }
 
-        return result;
-      }, {});
+            result[path].allowMethods.push(endpoint.method);
+          });
+
+          return result;
+        }, {});
+      } catch (err) {
+        return Promise.reject(err);
+      }
 
       return Promise.resolve(evt);
     }
@@ -234,16 +254,16 @@ module.exports = function(SPlugin, serverlessPath) {
         restApiId: this.context.restApiId,
         statusCode: '200',
         responseParameters: {
-          'method.response.header.Access-Control-Allow-Methods': '\'' + endpoint.allow.methods.join(',') + '\''
+          'method.response.header.Access-Control-Allow-Methods': '\'' + endpoint.allowMethods + '\''
         }
       };
 
-      if (endpoint.allow.origin) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + endpoint.allow.origin + '\'';
+      if (endpoint.allowOrigin) {
+        params.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + endpoint.allowOrigin + '\'';
       }
 
-      if (endpoint.allow.headers) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + endpoint.allow.headers + '\'';
+      if (endpoint.allowHeaders) {
+        params.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + endpoint.allowHeaders + '\'';
       }
 
       return this.ApiGateway.putIntegrationResponsePromised(params)
@@ -266,6 +286,5 @@ module.exports = function(SPlugin, serverlessPath) {
     }
   }
 
-  // Export Plugin Class
   return ServerlessCors;
 }

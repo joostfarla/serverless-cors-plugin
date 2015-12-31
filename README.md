@@ -45,15 +45,13 @@ Add the following properties to `s-function.json` to configure a CORS-policy:
 ```json
 "custom": {
   "cors": {
-    "allow": {
-      "origin": "*",
-      "headers": ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
-    }
+    "allowOrigin": "*",
+    "allowHeaders": ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key"]
   }
 }
 ```
 
-The `origin` and `headers` properties are both optional. You can also add this
+The `allowOrigin` property is required, the rest is optional. You can also add this
 configuration to `s-module.json` instead of `s-function.json` to apply the CORS-policy
 to all functions within the module.
 
@@ -70,7 +68,6 @@ be configured and deployed.
   * Access-Control-Max-Age
 * Add support for authentication
 * Add more verbose (debugging) output
-* Add unit tests
 * Improve validation
 * Improve docs
 * Auto-cleanup removed preflight endpoints
