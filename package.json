@@ -2,7 +2,7 @@
   "name": "serverless-cors-plugin",
   "version": "0.1.0",
   "description": "Serverless CORS Plugin - Managing Cross-origin resource sharing (CORS) policies",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "mocha"
   },
