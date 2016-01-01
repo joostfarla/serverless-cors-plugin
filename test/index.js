@@ -1,15 +1,15 @@
 'use strict';
 
-const Serverless = require('serverless'),
+const path = require('path');
+const SERVERLESS_PATH = path.join(process.cwd(), 'node_modules', 'serverless', 'lib');
+
+const Serverless = require(path.join(SERVERLESS_PATH, 'Serverless')),
   s = new Serverless(),
-  path = require('path'),
   chai = require('chai'),
   should = chai.should(),
   chaiAsPromised = require('chai-as-promised');
 
 chai.use(chaiAsPromised);
-
-const SERVERLESS_PATH = path.join(process.cwd(), 'node_modules', 'serverless', 'lib');
 
 const CorsPlugin = require('..')(
   require(path.join(SERVERLESS_PATH, 'ServerlessPlugin')),
