@@ -1,6 +1,9 @@
 # serverless-cors-plugin
 
-[![NPM](https://nodei.co/npm/serverless-cors-plugin.png)](https://nodei.co/npm/serverless-cors-plugin/)
+[![npm version](https://badge.fury.io/js/serverless-cors-plugin.svg)](https://badge.fury.io/js/serverless-cors-plugin)
+[![Build Status](https://travis-ci.org/joostfarla/serverless-cors-plugin.svg?branch=develop)](https://travis-ci.org/joostfarla/serverless-cors-plugin)
+[![Dependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin)
+[![DevDependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin/dev-status.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin#info=devDependencies)
 
 ## Introduction
 
