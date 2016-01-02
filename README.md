@@ -12,7 +12,7 @@ adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/
 
 This plugins does the following:
 
-* It will add a `Access-Control-Allow-Origin` header to all resource methods with
+* It will add an `Access-Control-Allow-Origin` header to all resource methods with
   a CORS-policy configured.
 
 * It will add an `OPTIONS` preflight endpoint with the proper headers for all
@@ -63,15 +63,10 @@ be configured and deployed.
 
 ## Roadmap
 
-* Remove duplicate code when [serverless/serverless#441](https://github.com/serverless/serverless/issues/441)
+* Refactor & complete tests when [serverless/serverless#441](https://github.com/serverless/serverless/issues/441)
   is fixed.
-* Add support for other CORS headers:
-  * Access-Control-Allow-Credentials
-  * Access-Control-Expose-Headers
-  * Access-Control-Max-Age
 * Add support for authentication
 * Add more verbose (debugging) output
-* Improve validation
 * Improve docs
 * Auto-cleanup removed preflight endpoints
 

@@ -53,19 +53,48 @@ describe('ServerlessCors', function() {
       })
     });
 
-    it('should fail when cors configuration does not contain an `origin` value', function() {
+    it('should fail when "allowOrigin" setting is missing', function() {
       let plugin = new CorsPlugin(s);
 
       plugin.addCorsHeaders({
         endpoint: {
           module: { custom: {} },
-          function: { custom: { cors: {} } },
+          function: { custom: { cors: {} }},
           responses: {}
         }
       }).should.be.rejected;
     });
 
-    it('should add allow-origin header when cors is configured for function', function(done) {
+    it('should fail when "allowOrigin" setting is invalid', function() {
+      let plugin = new CorsPlugin(s);
+
+      plugin.addCorsHeaders({
+        endpoint: {
+          module: { custom: {} },
+          function: { custom: { cors: {
+            allowOrigin: true,
+          }}},
+          responses: {}
+        }
+      }).should.be.rejected;
+    });
+
+    it('should fail when "allowHeaders" setting is invalid', function() {
+      let plugin = new CorsPlugin(s);
+
+      plugin.addCorsHeaders({
+        endpoint: {
+          module: { custom: {} },
+          function: { custom: { cors: {
+            allowOrigin: '*',
+            allowHeaders: 'Value-That-Is-Not-An-Array'
+          }}},
+          responses: {}
+        }
+      }).should.be.rejected;
+    });
+
+    it('should add an "Access-Control-Allow-Origin" header when "allowOrigin" is set', function(done) {
       let plugin = new CorsPlugin(s);
 
       plugin.addCorsHeaders({
@@ -83,6 +112,9 @@ describe('ServerlessCors', function() {
         headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Methods');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Headers');
+        headers.should.not.contain.key('method.response.header.Access-Control-Allow-Credentials');
+        headers.should.not.contain.key('method.response.header.Access-Control-Expose-Headers');
+        headers.should.not.contain.key('method.response.header.Access-Control-Max-Age');
         done();
       })
     });

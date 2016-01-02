@@ -6,6 +6,7 @@
 module.exports = function(SPlugin, serverlessPath) {
   const _ = require('lodash'),
     path = require('path'),
+    Joi = require('joi'),
     Promise = require('bluebird'),
     SError = require(path.join(serverlessPath, 'ServerlessError')),
     SUtils = require(path.join(serverlessPath, 'utils'));
@@ -89,12 +90,22 @@ module.exports = function(SPlugin, serverlessPath) {
         endpoint.function.custom.cors
       );
 
-      if (_.isUndefined(policy.allowOrigin)) {
-        throw new SError(
-          'CORS policy requires a value for "allowOrigin"',
-          SError.errorCodes.INVALID_PROJECT_SERVERLESS
-        );
-      }
+      var schema = Joi.object().keys({
+        allowOrigin: Joi.string().required(),
+        allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[a-zA-Z-]+$/)),
+        allowCredentials: Joi.boolean(),
+        exposeHeaders: Joi.array().min(1).items(Joi.string().regex(/^[a-zA-Z-]+$/)),
+        maxAge: Joi.number()
+      });
+
+      Joi.validate(policy, schema, function(err) {
+        if (err) {
+          throw new SError(
+            err.message,
+            SError.errorCodes.INVALID_PROJECT_SERVERLESS
+          );
+        }
+      });
 
       return policy;
     }
@@ -233,7 +244,10 @@ module.exports = function(SPlugin, serverlessPath) {
         responseParameters: {
           'method.response.header.Access-Control-Allow-Methods': true,
           'method.response.header.Access-Control-Allow-Origin': true,
-          'method.response.header.Access-Control-Allow-Headers': false
+          'method.response.header.Access-Control-Allow-Headers': false,
+          'method.response.header.Access-Control-Allow-Credentials': false,
+          'method.response.header.Access-Control-Expose-Headers': false,
+          'method.response.header.Access-Control-Max-Age': false
         }
       };
 
@@ -252,12 +266,22 @@ module.exports = function(SPlugin, serverlessPath) {
         }
       };
 
-      if (endpoint.allowOrigin) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + endpoint.allowOrigin + '\'';
+      params.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + endpoint.allowOrigin + '\'';
+
+      if (!_.isUndefined(endpoint.allowHeaders)) {
+        params.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + endpoint.allowHeaders + '\'';
       }
 
-      if (endpoint.allowHeaders) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + endpoint.allowHeaders + '\'';
+      if (!_.isUndefined(endpoint.allowCredentials)) {
+        params.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + endpoint.allowCredentials + '\'';
+      }
+
+      if (!_.isUndefined(endpoint.exposeHeaders)) {
+        params.responseParameters['method.response.header.Access-Control-Expose-Headers'] = '\'' + endpoint.exposeHeaders + '\'';
+      }
+
+      if (!_.isUndefined(endpoint.maxAge)) {
+        params.responseParameters['method.response.header.Access-Control-Max-Age'] = '\'' + endpoint.maxAge + '\'';
       }
 
       return this.ApiGateway.putIntegrationResponsePromised(params)
