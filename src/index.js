@@ -90,7 +90,7 @@ module.exports = function(SPlugin, serverlessPath) {
         endpoint.function.custom.cors
       );
 
-      var schema = Joi.object().keys({
+      let schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
         allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[a-zA-Z-]+$/)),
         allowCredentials: Joi.boolean(),

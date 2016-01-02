@@ -1,4 +1,7 @@
-# serverless-cors-plugin
+# Serverless CORS Plugin
+
+A Serverless Plugin for the [Serverless Framework](http://www.serverless.com) which
+adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)).
 
 [![npm version](https://badge.fury.io/js/serverless-cors-plugin.svg)](https://badge.fury.io/js/serverless-cors-plugin)
 [![Build Status](https://travis-ci.org/joostfarla/serverless-cors-plugin.svg?branch=develop)](https://travis-ci.org/joostfarla/serverless-cors-plugin)
@@ -6,9 +9,6 @@
 [![DevDependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin/dev-status.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin#info=devDependencies)
 
 ## Introduction
-
-A Serverless Plugin for the [Serverless Framework](http://www.serverless.com) which
-adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)).
 
 This plugins does the following:
 
@@ -54,12 +54,24 @@ Add the following properties to `s-function.json` to configure a CORS-policy:
 }
 ```
 
-The `allowOrigin` property is required, the rest is optional. You can also add this
+The `allowOrigin` property is required, the other headers are optional. You can also add this
 configuration to `s-module.json` instead of `s-function.json` to apply the CORS-policy
 to all functions within the module.
 
 Run `endpoint deploy` and the CORS headers and preflight endpoints will dynamically
 be configured and deployed.
+
+## Options
+
+These are all options you can use:
+
+Option | Type | Example
+---|:---|:---
+`allowOrigin` | String | `"*"`
+`allowHeaders` | Array | `["Content-Type", "X-Api-Key"]`
+`allowCredentials` | Boolean | `true`
+`exposeHeaders` | Array | `["Content-Type", "X-Api-Key"]`
+`maxAge` | Number | `3600`
 
 ## Roadmap
 
@@ -67,7 +79,6 @@ be configured and deployed.
   is fixed.
 * Add support for authentication
 * Add more verbose (debugging) output
-* Improve docs
 * Auto-cleanup removed preflight endpoints
 
 ## License
