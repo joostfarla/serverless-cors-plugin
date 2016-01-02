@@ -73,12 +73,14 @@ Option | Type | Example
 `exposeHeaders` | Array | `["Content-Type", "X-Api-Key"]`
 `maxAge` | Number | `3600`
 
+For more information, read the [CORS documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS).
+
 ## Roadmap
 
 * Refactor & complete tests when [serverless/serverless#441](https://github.com/serverless/serverless/issues/441)
   is fixed.
-* Add support for authentication
 * Add more verbose (debugging) output
+* Better support for authenticated requests
 * Auto-cleanup removed preflight endpoints
 
 ## License
