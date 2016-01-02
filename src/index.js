@@ -11,26 +11,20 @@ module.exports = function(SPlugin, serverlessPath) {
     SUtils = require(path.join(serverlessPath, 'utils'));
 
   class ServerlessCors extends SPlugin {
-    constructor(S, config) {
-      super(S, config);
-    }
-
     static getName() {
-      return 'com.serverless.' + ServerlessCors.name;
+      return 'com.joostfarla.' + ServerlessCors.name;
     }
 
     registerHooks() {
       this.S.addHook(this.addCorsHeaders.bind(this), {
         action: 'endpointBuildApiGateway',
-        event:  'pre'
+        event: 'pre'
       });
 
       this.S.addHook(this.addPreflightRequests.bind(this), {
         action: 'endpointDeploy',
-        event:  'post'
+        event: 'post'
       });
-
-      return Promise.resolve();
     }
 
     addCorsHeaders(evt) {
@@ -238,7 +232,7 @@ module.exports = function(SPlugin, serverlessPath) {
         statusCode: '200',
         responseParameters: {
           'method.response.header.Access-Control-Allow-Methods': true,
-          'method.response.header.Access-Control-Allow-Origin': false,
+          'method.response.header.Access-Control-Allow-Origin': true,
           'method.response.header.Access-Control-Allow-Headers': false
         }
       };

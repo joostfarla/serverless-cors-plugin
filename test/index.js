@@ -19,7 +19,7 @@ const CorsPlugin = require('..')(
 describe('ServerlessCors', function() {
   describe('#getName()', function() {
     it('should return the correct name', function() {
-      CorsPlugin.getName().should.equal('com.serverless.ServerlessCors');
+      CorsPlugin.getName().should.equal('com.joostfarla.ServerlessCors');
     });
   });
 
