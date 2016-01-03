@@ -119,6 +119,27 @@ describe('ServerlessCors', function() {
       })
     });
 
+    it('should add an "Access-Control-Allow-Credentials" header to GET function when "allowCredentials" is set', function(done) {
+      let plugin = new CorsPlugin(s);
+
+      plugin.addCorsHeaders({
+        endpoint: {
+          method: 'GET',
+          module: { custom: {} },
+          function: { custom: {
+            cors: { allowOrigin: 'http://function.test', allowCredentials: true }
+          }},
+          responses: {
+            default: { statusCode: '200' }
+          }
+        }
+      }).then(function(evt) {
+        let headers = evt.endpoint.responses.default.responseParameters;
+        headers['method.response.header.Access-Control-Allow-Credentials'].should.equal('\'true\'');
+        done();
+      })
+    });
+
     it('should preserve existing headers when cors is configured for function', function(done) {
       let plugin = new CorsPlugin(s);
 
