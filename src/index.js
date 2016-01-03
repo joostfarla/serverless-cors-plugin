@@ -53,6 +53,11 @@ module.exports = function(SPlugin, serverlessPath) {
         }
 
         response.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + policy.allowOrigin + '\'';
+
+        // Set allow-credentials header on all GET responses as these will not be preflighted
+        if (evt.endpoint.method === 'GET' && !_.isUndefined(policy.allowCredentials)) {
+          response.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + policy.allowCredentials + '\'';
+        }
       });
 
       return Promise.resolve(evt);
