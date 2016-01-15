@@ -24,8 +24,8 @@
   "homepage": "https://github.com/joostfarla/serverless-cors-plugin#readme",
   "dependencies": {
     "bluebird": "^3.1.1",
-    "joi": "^7.1.0",
-    "lodash": "^3.10.1"
+    "joi": "^7.2.0",
+    "lodash": "^4.0.0"
   },
   "devDependencies": {
     "chai": "^3.4.1",
