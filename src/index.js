@@ -97,9 +97,9 @@ module.exports = function(SPlugin, serverlessPath) {
 
       let schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
-        allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[a-zA-Z-]+$/)),
+        allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[\w-]+$/)),
         allowCredentials: Joi.boolean(),
-        exposeHeaders: Joi.array().min(1).items(Joi.string().regex(/^[a-zA-Z-]+$/)),
+        exposeHeaders: Joi.array().min(1).items(Joi.string().regex(/^[\w-]+$/)),
         maxAge: Joi.number()
       });
 
