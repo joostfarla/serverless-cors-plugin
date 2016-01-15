@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+* Always add `Access-Control-Allow-Credentials` when `allowCredentials` is set.
+* Allow numeric characters in header names.
+
 ## 0.1.1
 
 * Added support for `allowCredentials`, `exposeHeaders` and `maxAge`.
