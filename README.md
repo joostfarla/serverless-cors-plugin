@@ -8,6 +8,8 @@ adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/
 [![Dependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin)
 [![DevDependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin/dev-status.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin#info=devDependencies)
 
+**THIS PLUGIN IS NOT YET COMPATIBLE WITH SERVERLESS V0.1, A NEW VERSION WILL BE RELEASED ASAP!**
+
 ## Introduction
 
 This plugins does the following:
