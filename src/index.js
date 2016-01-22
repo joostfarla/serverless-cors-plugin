@@ -24,30 +24,29 @@ module.exports = function(SPlugin, serverlessPath) {
 
       this.S.addHook(this.addPreflightRequests.bind(this), {
         action: 'endpointDeploy',
-        event: 'post'
+        event: 'pre'
       });
+
+      return Promise.resolve();
     }
 
     addCorsHeaders(evt) {
       let policy,
-        responseParameters = {};
+        endpoint = this.S.state.getEndpoints({ paths: [evt.options.path] })[0];
 
-      // Capture region object for preflight endpoints
-      this.context = evt.region;
-
-      // Skip when CORS is not enabled
-      if (!this._isCorsEnabled(evt.endpoint)) {
+      // Skip preflight requests or when CORS is not enabled
+      if (endpoint.method === 'OPTIONS' || !this._isCorsEnabled(endpoint)) {
         return Promise.resolve(evt);
       }
 
       try {
-        policy = this._getEndpointPolicy(evt.endpoint);
+        policy = this._getEndpointPolicy(endpoint);
       } catch (err) {
         return Promise.reject(err);
       }
 
       // Set allow-origin header on all responses
-      _.each(evt.endpoint.responses, function(response) {
+      _.each(endpoint.responses, function(response) {
         if (!response.responseParameters) {
           response.responseParameters = {};
         }
@@ -55,7 +54,7 @@ module.exports = function(SPlugin, serverlessPath) {
         response.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + policy.allowOrigin + '\'';
 
         // Set allow-credentials header on all GET responses as these will not be preflighted
-        if (evt.endpoint.method === 'GET' && !_.isUndefined(policy.allowCredentials)) {
+        if (endpoint.method === 'GET' && !_.isUndefined(policy.allowCredentials)) {
           response.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + policy.allowCredentials + '\'';
         }
       });
@@ -64,35 +63,91 @@ module.exports = function(SPlugin, serverlessPath) {
     }
 
     addPreflightRequests(evt) {
-      let config = {
-        region: this.context.region,
-        accessKeyId: this.S._awsAdminKeyId,
-        secretAccessKey: this.S._awsAdminSecretKey,
-      };
+      let _this = this,
+        endpoints = _this.S.state.getEndpoints(),
+        paths = _.map(
+          _.uniqBy(endpoints, 'path'),
+          endpoint => endpoint.path
+        );
 
-      this.ApiGateway = require(path.join(serverlessPath, 'utils', 'aws', 'ApiGateway'))(config);
+      // Only deploy prefight endpoints when 'all' flag is used.
+      if (evt.options.all !== true) {
+        return Promise.resolve(evt);
+      }
 
-      evt = {
-        deployed: evt.endpoints,
-        stage: evt.stage
-      };
+      _.each(paths, function(path) {
+        let policy, module, preflightEndpoint, response,
+          allowMethods = [];
 
-      return this._getApiResources(evt)
-        .bind(this)
-        .then(this._getEndpoints)
-        .then(this._createPreflightEndpoints)
-        .then(this._deployPreflightEndpoints)
-        .then(this._deployApi);
+        _.each(_.filter(endpoints, { 'path': path }), function(endpoint) {
+          if (!_this._isCorsEnabled(endpoint)) {
+            return;
+          }
+
+          // @todo handle different configurations within same path
+          policy = _this._getEndpointPolicy(endpoint);
+          module = _this.S.state.getModules({
+            component: endpoint._config.component,
+            module: endpoint._config.module
+          })[0];
+
+          allowMethods.push(endpoint.method);
+        });
+
+        if (allowMethods.length === 0) {
+          return Promise.resolve(evt);
+        }
+
+        preflightEndpoint = new _this.S.classes.Endpoint(_this.S, {
+          component:      module._config.component,
+          module:         module.name,
+          endpointPath:   path,
+          endpointMethod: 'OPTIONS',
+          type:           'MOCK'
+        });
+
+        if (preflightEndpoint.responses[400]) {
+          delete preflightEndpoint.responses[400];
+        }
+
+        response = preflightEndpoint.responses.default;
+
+        response.responseParameters = {
+          'method.response.header.Access-Control-Allow-Methods': '\'' + allowMethods + '\'',
+          'method.response.header.Access-Control-Allow-Origin': '\'' + policy.allowOrigin + '\''
+        };
+
+        if (!_.isUndefined(policy.allowHeaders)) {
+          response.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + policy.allowHeaders + '\'';
+        }
+
+        if (!_.isUndefined(policy.allowCredentials)) {
+          response.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + policy.allowCredentials + '\'';
+        }
+
+        if (!_.isUndefined(policy.exposeHeaders)) {
+          response.responseParameters['method.response.header.Access-Control-Expose-Headers'] = '\'' + policy.exposeHeaders + '\'';
+        }
+
+        if (!_.isUndefined(policy.maxAge)) {
+          response.responseParameters['method.response.header.Access-Control-Max-Age'] = '\'' + policy.maxAge + '\'';
+        }
+
+        module.endpoints.push(preflightEndpoint);
+      });
+
+      return Promise.resolve(evt);
     }
 
     _isCorsEnabled(endpoint) {
-      return !_.isUndefined(endpoint.module.custom.cors) || !_.isUndefined(endpoint.function.custom.cors);
+      return !_.isUndefined(endpoint.getFunction().getModule().custom.cors) ||
+        !_.isUndefined(endpoint.getFunction().custom.cors);
     }
 
     _getEndpointPolicy(endpoint) {
       let policy = _.merge({},
-        endpoint.module.custom.cors,
-        endpoint.function.custom.cors
+        endpoint.getFunction().getModule().custom.cors,
+        endpoint.getFunction().custom.cors
       );
 
       let schema = Joi.object().keys({
@@ -113,199 +168,6 @@ module.exports = function(SPlugin, serverlessPath) {
       });
 
       return policy;
-    }
-
-    _getApiResources(evt) {
-      let params = {
-        restApiId: this.context.restApiId,
-        limit: 500
-      };
-
-      return this.ApiGateway.getResourcesPromised(params)
-        .then(function(response) {
-          evt.resources = response.items;
-          return evt;
-        });
-    }
-
-    _getEndpoints(evt) {
-      return SUtils.getEndpoints(this.S._projectRootPath)
-        .then(function(endpoints) {
-          evt.endpoints = endpoints;
-          return evt;
-        });
-    }
-
-    _createPreflightEndpoints(evt) {
-      let _this = this;
-      let paths = _.uniq(_.pluck(evt.deployed, 'path'));
-
-      // Remove leading slashes
-      paths = _.map(paths, path => _.trimLeft(path, '/'));
-
-      // Generate method objects
-      // @todo how do we handle hard-specified OPTIONS requests?
-      try {
-        evt.preflightEndpoints = paths.reduce(function(result, path) {
-          let endpoints = _.filter(evt.endpoints, { path: path });
-
-          _.forEach(endpoints, function(endpoint) {
-            let policy,
-              resource = _.findWhere(evt.resources, { path: '/' + path });
-
-            // Skip when resource is not found or CORS is not enabled
-            if (!resource || !_this._isCorsEnabled(endpoint)) {
-              return;
-            }
-
-            policy = _this._getEndpointPolicy(endpoint);
-
-            if (!result[path]) {
-              // @todo handle conflicts with endpoints within same path
-              result[path] = _.merge(policy, {
-                path: path,
-                resource: resource
-              });
-            }
-
-            if (!result[path].allowMethods) {
-              result[path].allowMethods = [];
-            }
-
-            result[path].allowMethods.push(endpoint.method);
-          });
-
-          return result;
-        }, {});
-      } catch (err) {
-        return Promise.reject(err);
-      }
-
-      return Promise.resolve(evt);
-    }
-
-    _deployPreflightEndpoints(evt) {
-      return Promise.resolve(_.values(evt.preflightEndpoints))
-        .mapSeries(this._createEndpoint.bind(this))
-        .then(() => { return evt; });
-    }
-
-    _createEndpoint(endpoint) {
-      return this._removeEndpointMethod(endpoint)
-        .bind(this)
-        .then(this._createEndpointMethod)
-        .then(this._createEndpointIntegration)
-        .then(this._createEndpointMethodResponse)
-        .then(this._createEndpointIntegrationResponse);
-    }
-
-    _removeEndpointMethod(endpoint) {
-      let params = {
-        httpMethod: 'OPTIONS',
-        resourceId: endpoint.resource.id,
-        restApiId: this.context.restApiId
-      };
-
-      return this.ApiGateway.deleteMethodPromised(params)
-        .catch(function(err) {
-          // Do nothing, it probably doesn't exist
-        })
-        .then(() => { return endpoint; });
-    }
-
-    _createEndpointMethod(endpoint) {
-      let params = {
-        authorizationType: 'none',
-        httpMethod: 'OPTIONS',
-        resourceId: endpoint.resource.id,
-        restApiId: this.context.restApiId
-      };
-
-      return this.ApiGateway.putMethodPromised(params)
-        .then(method => { return endpoint; });
-    }
-
-    _createEndpointIntegration(endpoint) {
-      var params = {
-        httpMethod: 'OPTIONS',
-        resourceId: endpoint.resource.id,
-        restApiId: this.context.restApiId,
-        type: 'MOCK',
-        requestTemplates: {
-          'application/json': '{"statusCode": 200}'
-        }
-      };
-
-      return this.ApiGateway.putIntegrationPromised(params)
-        .then(integration => { return endpoint; });
-    }
-
-    _createEndpointMethodResponse(endpoint) {
-      var params = {
-        httpMethod: 'OPTIONS',
-        resourceId: endpoint.resource.id,
-        restApiId: this.context.restApiId,
-        statusCode: '200',
-        responseParameters: {
-          'method.response.header.Access-Control-Allow-Methods': true,
-          'method.response.header.Access-Control-Allow-Origin': true,
-          'method.response.header.Access-Control-Allow-Headers': false,
-          'method.response.header.Access-Control-Allow-Credentials': false,
-          'method.response.header.Access-Control-Expose-Headers': false,
-          'method.response.header.Access-Control-Max-Age': false
-        }
-      };
-
-      return this.ApiGateway.putMethodResponsePromised(params)
-        .then(methodResponse => { return endpoint; });
-    }
-
-    _createEndpointIntegrationResponse(endpoint) {
-      var params = {
-        httpMethod: 'OPTIONS',
-        resourceId: endpoint.resource.id,
-        restApiId: this.context.restApiId,
-        statusCode: '200',
-        responseParameters: {
-          'method.response.header.Access-Control-Allow-Methods': '\'' + endpoint.allowMethods + '\''
-        }
-      };
-
-      params.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + endpoint.allowOrigin + '\'';
-
-      if (!_.isUndefined(endpoint.allowHeaders)) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Headers'] = '\'' + endpoint.allowHeaders + '\'';
-      }
-
-      if (!_.isUndefined(endpoint.allowCredentials)) {
-        params.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + endpoint.allowCredentials + '\'';
-      }
-
-      if (!_.isUndefined(endpoint.exposeHeaders)) {
-        params.responseParameters['method.response.header.Access-Control-Expose-Headers'] = '\'' + endpoint.exposeHeaders + '\'';
-      }
-
-      if (!_.isUndefined(endpoint.maxAge)) {
-        params.responseParameters['method.response.header.Access-Control-Max-Age'] = '\'' + endpoint.maxAge + '\'';
-      }
-
-      return this.ApiGateway.putIntegrationResponsePromised(params)
-        .then(integrationResponse => { return endpoint; });
-    }
-
-    _deployApi(evt) {
-      let params = {
-        restApiId: this.context.restApiId,
-        stageName: evt.stage,
-        description: evt.description || 'Serverless deployment',
-        stageDescription: evt.stage,
-        variables: {
-          functionAlias: evt.stage
-        }
-      };
-
-      return this.ApiGateway.createDeploymentPromised(params)
-        .then(deployment => { return evt; });
     }
   }
 

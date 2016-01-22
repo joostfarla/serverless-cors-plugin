@@ -37,9 +37,7 @@ Add the plugin to `s-project.json`:
 
 ```json
 "plugins": [
-  {
-    "path": "serverless-cors-plugin"
-  }
+  "serverless-cors-plugin"
 ]
 ```
 
