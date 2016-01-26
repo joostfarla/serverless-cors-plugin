@@ -76,7 +76,7 @@ module.exports = function(SPlugin, serverlessPath) {
       }
 
       _.each(paths, function(path) {
-        let policy, module, preflightEndpoint, response,
+        let policy, func, preflightEndpoint, response,
           allowMethods = [];
 
         _.each(_.filter(endpoints, { 'path': path }), function(endpoint) {
@@ -86,10 +86,7 @@ module.exports = function(SPlugin, serverlessPath) {
 
           // @todo handle different configurations within same path
           policy = _this._getEndpointPolicy(endpoint);
-          module = _this.S.state.getModules({
-            component: endpoint._config.component,
-            module: endpoint._config.module
-          })[0];
+          func = endpoint.getFunction();
 
           allowMethods.push(endpoint.method);
         });
@@ -99,8 +96,9 @@ module.exports = function(SPlugin, serverlessPath) {
         }
 
         preflightEndpoint = new _this.S.classes.Endpoint(_this.S, {
-          component:      module._config.component,
-          module:         module.name,
+          component:      func._config.component,
+          module:         func._config.module,
+          function:       func._config.function,
           endpointPath:   path,
           endpointMethod: 'OPTIONS',
           type:           'MOCK'
@@ -133,7 +131,7 @@ module.exports = function(SPlugin, serverlessPath) {
           response.responseParameters['method.response.header.Access-Control-Max-Age'] = '\'' + policy.maxAge + '\'';
         }
 
-        module.endpoints.push(preflightEndpoint);
+        func.endpoints.push(preflightEndpoint);
       });
 
       return Promise.resolve(evt);
