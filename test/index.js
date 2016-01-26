@@ -4,7 +4,7 @@ const path = require('path'),
   chai = require('chai'),
   should = chai.should(),
   chaiAsPromised = require('chai-as-promised'),
-  SERVERLESS_PATH = path.dirname(require.resolve('serverless')),
+  SERVERLESS_PATH = path.join(process.cwd(), 'node_modules', 'serverless', 'lib'),
   Serverless = require(path.join(SERVERLESS_PATH, 'Serverless')),
   utils = require(path.join(SERVERLESS_PATH, 'utils'));
 
