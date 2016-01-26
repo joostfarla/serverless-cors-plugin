@@ -2,6 +2,10 @@
 
 ## 0.1.2
 
+* Made compatible with Serverless v0.2
+
+## 0.1.2
+
 * Always add `Access-Control-Allow-Credentials` when `allowCredentials` is set.
 * Allow numeric characters in header names.
 
