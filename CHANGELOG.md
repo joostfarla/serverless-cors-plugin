@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2
+## 0.2.0
 
 * Made compatible with Serverless v0.2
 
