@@ -104,6 +104,10 @@ module.exports = function(SPlugin, serverlessPath) {
           type:           'MOCK'
         });
 
+        preflightEndpoint.requestTemplates = {
+          'application/json': '{"statusCode": 200}'
+        };
+
         if (preflightEndpoint.responses[400]) {
           delete preflightEndpoint.responses[400];
         }
