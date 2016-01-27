@@ -1,6 +1,6 @@
 {
   "name": "serverless-cors-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Serverless CORS Plugin - Managing Cross-origin resource sharing (CORS) policies",
   "main": "src/index.js",
   "scripts": {
