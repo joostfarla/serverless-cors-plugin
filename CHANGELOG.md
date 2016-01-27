@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+* Fix internal server error due to missing request template
+
 ## 0.2.0
 
 * Made compatible with Serverless v0.2
