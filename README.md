@@ -54,7 +54,7 @@ configuration to `s-module.json` instead of `s-function.json` to apply the CORS-
 to all functions within the module.
 
 Run `endpoint deploy` and the CORS headers and preflight endpoints will dynamically
-be configured and deployed.
+be configured and deployed. Use the `--all` flag to deploy pre-flight OPTIONS endpoints.
 
 ## Options
 
