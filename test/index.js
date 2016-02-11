@@ -173,21 +173,14 @@ function _bootstrapEndpoint(path) {
     parsed = utils.parseSPath(path);
 
   obj.component = new s.classes.Component(s, {
-    component: parsed.component,
     sPath: parsed.component
   });
 
   obj.function = new s.classes.Function(s, {
-    component: parsed.component,
-    function: parsed.function,
     sPath: parsed.component + '/' + parsed.function
   });
 
   obj.endpoint = new s.classes.Endpoint(s, {
-    component: parsed.component,
-    function: parsed.function,
-    endpointPath: parsed.urlPath,
-    endpointMethod: parsed.urlMethod,
     sPath: parsed.component + '/' + parsed.function + '@' + parsed.urlPath + '~' + parsed.urlMethod
   });
 
