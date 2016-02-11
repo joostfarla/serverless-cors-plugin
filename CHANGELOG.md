@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+* Added support for component-level policies
+* Reflect module concept removal in Serverless v0.4
+
 ## 0.2.1
 
 * Fix internal server error due to missing request template

@@ -50,8 +50,8 @@ Add the following properties to `s-function.json` to configure a CORS-policy:
 ```
 
 The `allowOrigin` property is required, the other headers are optional. You can also add this
-configuration to `s-module.json` instead of `s-function.json` to apply the CORS-policy
-to all functions within the module.
+configuration to `s-component.json` instead of `s-function.json` to apply the CORS-policy
+to all functions within the component.
 
 Run `endpoint deploy` and the CORS headers and preflight endpoints will dynamically
 be configured and deployed. Use the `--all` flag to deploy pre-flight OPTIONS endpoints.

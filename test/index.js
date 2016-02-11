@@ -43,8 +43,8 @@ describe('ServerlessCors', function() {
 
   describe('#addCorsHeaders()', function() {
     it('should not add any headers when cors is not configured', function(done) {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       plugin.addCorsHeaders({
         options: { path: endpointPath }
@@ -58,8 +58,8 @@ describe('ServerlessCors', function() {
     });
 
     it('should fail when "allowOrigin" setting is missing', function() {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = {};
 
@@ -70,8 +70,8 @@ describe('ServerlessCors', function() {
     });
 
     it('should fail when "allowOrigin" setting is invalid', function() {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = { allowOrigin: true };
 
@@ -82,8 +82,8 @@ describe('ServerlessCors', function() {
     });
 
     it('should fail when "allowHeaders" setting is invalid', function() {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = {
         allowOrigin: '*',
@@ -97,8 +97,8 @@ describe('ServerlessCors', function() {
     });
 
     it('should add an "Access-Control-Allow-Origin" header when "allowOrigin" is set', function(done) {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = {
         allowOrigin: '*',
@@ -116,12 +116,12 @@ describe('ServerlessCors', function() {
         headers.should.not.contain.key('method.response.header.Access-Control-Expose-Headers');
         headers.should.not.contain.key('method.response.header.Access-Control-Max-Age');
         done();
-      })
+      });
     });
 
     it('should add an "Access-Control-Allow-Credentials" header to GET function when "allowCredentials" is set', function(done) {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = {
         allowOrigin: 'http://function.test',
@@ -134,12 +134,12 @@ describe('ServerlessCors', function() {
         let headers = obj.endpoint.responses.default.responseParameters;
         headers['method.response.header.Access-Control-Allow-Credentials'].should.equal('\'true\'');
         done();
-      })
+      });
     });
 
     it('should preserve existing headers when cors is configured for function', function(done) {
-      let endpointPath = 'someComponent/someModule/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someModule/someFunction@resource~GET');
+      let endpointPath = 'someComponent/someFunction@resource~GET',
+        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       obj.function.custom.cors = {
         allowOrigin: '*',
@@ -159,7 +159,7 @@ describe('ServerlessCors', function() {
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Methods');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Headers');
         done();
-      })
+      });
     });
   });
 
@@ -173,30 +173,25 @@ function _bootstrapEndpoint(path) {
     parsed = utils.parseSPath(path);
 
   obj.component = new s.classes.Component(s, {
-    component: parsed.component
-  });
-
-  obj.module = new s.classes.Module(s, {
     component: parsed.component,
-    module: parsed.module
+    sPath: parsed.component
   });
 
   obj.function = new s.classes.Function(s, {
     component: parsed.component,
-    module: parsed.module,
-    function: parsed.function
+    function: parsed.function,
+    sPath: parsed.component + '/' + parsed.function
   });
 
   obj.endpoint = new s.classes.Endpoint(s, {
     component: parsed.component,
-    module: parsed.module,
     function: parsed.function,
     endpointPath: parsed.urlPath,
-    endpointMethod: parsed.urlMethod
+    endpointMethod: parsed.urlMethod,
+    sPath: parsed.component + '/' + parsed.function + '@' + parsed.urlPath + '~' + parsed.urlMethod
   });
 
   s.state.setAsset(obj.component);
-  s.state.setAsset(obj.module);
   s.state.setAsset(obj.function);
   s.state.setAsset(obj.endpoint);
 

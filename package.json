@@ -31,6 +31,6 @@
     "chai": "^3.4.1",
     "chai-as-promised": "^5.2.0",
     "mocha": "^2.3.4",
-    "serverless": "0.2.0"
+    "serverless": "^0.4.0"
   }
 }

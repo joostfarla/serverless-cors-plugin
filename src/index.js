@@ -142,11 +142,15 @@ module.exports = function(SPlugin, serverlessPath) {
     }
 
     _isCorsEnabled(endpoint) {
-      return !_.isUndefined(endpoint.getFunction().custom.cors);
+      return !_.isUndefined(endpoint.getFunction().getComponent().custom.cors) ||
+        !_.isUndefined(endpoint.getFunction().custom.cors);
     }
 
     _getEndpointPolicy(endpoint) {
-      let policy = endpoint.getFunction().custom.cors;
+      let policy = _.merge({},
+        endpoint.getFunction().getComponent().custom.cors,
+        endpoint.getFunction().custom.cors
+      );
 
       let schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
