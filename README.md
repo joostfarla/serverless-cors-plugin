@@ -36,6 +36,14 @@ Add the plugin to `s-project.json`:
 ]
 ```
 
+To find the best compatible (major) version, use the table below:
+
+Serverless version | Plugin version
+---|:---
+v0.1 | v0.1
+v0.2-v0.3 | v0.2
+v0.4 | v0.3
+
 ## Usage
 
 Add the following properties to `s-function.json` to configure a CORS-policy:
