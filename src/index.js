@@ -96,11 +96,7 @@ module.exports = function(SPlugin, serverlessPath) {
         }
 
         preflightEndpoint = new _this.S.classes.Endpoint(_this.S, {
-          component:      func._config.component,
-          module:         func._config.module,
-          function:       func._config.function,
-          endpointPath:   path,
-          endpointMethod: 'OPTIONS',
+          sPath:          func._config.sPath + '@' + path + '~OPTIONS',
           type:           'MOCK'
         });
 
