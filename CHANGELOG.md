@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+* Fix mock endpoint type
+
 ## 0.3.0
 
 * Added support for component-level policies

@@ -96,10 +96,10 @@ module.exports = function(SPlugin, serverlessPath) {
         }
 
         preflightEndpoint = new _this.S.classes.Endpoint(_this.S, {
-          sPath:          func._config.sPath + '@' + path + '~OPTIONS',
-          type:           'MOCK'
+          sPath: func._config.sPath + '@' + path + '~OPTIONS'
         });
 
+        preflightEndpoint.type = 'MOCK';
         preflightEndpoint.requestTemplates = {
           'application/json': '{"statusCode": 200}'
         };
