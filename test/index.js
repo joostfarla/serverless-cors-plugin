@@ -22,6 +22,13 @@ describe('ServerlessCors', function() {
     this.timeout(0);
 
     s = new Serverless();
+    s.config.projectPath = '.';
+    s.state.meta.set({
+      stages: {
+        dev: { regions: { 'eu-west-1': {} } }
+      }
+    });
+
     plugin = new CorsPlugin(s);
     s.addPlugin(plugin);
   });
@@ -47,7 +54,7 @@ describe('ServerlessCors', function() {
         obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
         let endpoint = s.state.getEndpoints({ paths: [ endpointPath ] })[0],
           headers = endpoint.responses.default.responseParameters;
@@ -64,7 +71,7 @@ describe('ServerlessCors', function() {
       obj.function.custom.cors = {};
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
@@ -76,7 +83,7 @@ describe('ServerlessCors', function() {
       obj.function.custom.cors = { allowOrigin: true };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
@@ -91,7 +98,7 @@ describe('ServerlessCors', function() {
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
@@ -106,7 +113,7 @@ describe('ServerlessCors', function() {
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
         let headers = obj.endpoint.responses.default.responseParameters;
         headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
@@ -129,7 +136,7 @@ describe('ServerlessCors', function() {
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
         let headers = obj.endpoint.responses.default.responseParameters;
         headers['method.response.header.Access-Control-Allow-Credentials'].should.equal('\'true\'');
@@ -151,7 +158,7 @@ describe('ServerlessCors', function() {
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath }
+        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
         let headers = obj.endpoint.responses.default.responseParameters;
         headers['Some-Header'].should.equal('Some-Value');

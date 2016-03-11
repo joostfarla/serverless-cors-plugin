@@ -32,10 +32,14 @@ module.exports = function(SPlugin, serverlessPath) {
 
     addCorsHeaders(evt) {
       let policy,
-        endpoint = this.S.state.getEndpoints({ paths: [evt.options.path] })[0];
+        endpoint = this.S.state.getEndpoints({ paths: [evt.options.path] })[0],
+        populatedEndpoint = endpoint.getPopulated({
+          stage: evt.options.stage,
+          region: evt.options.region
+        });
 
       // Skip preflight requests or when CORS is not enabled
-      if (endpoint.method === 'OPTIONS' || !this._isCorsEnabled(endpoint)) {
+      if (populatedEndpoint.method === 'OPTIONS' || !this._isCorsEnabled(endpoint)) {
         return Promise.resolve(evt);
       }
 
@@ -46,7 +50,7 @@ module.exports = function(SPlugin, serverlessPath) {
       }
 
       // Set allow-origin header on all responses
-      _.each(endpoint.responses, function(response) {
+      _.each(populatedEndpoint.responses, function(response) {
         if (!response.responseParameters) {
           response.responseParameters = {};
         }
@@ -54,10 +58,12 @@ module.exports = function(SPlugin, serverlessPath) {
         response.responseParameters['method.response.header.Access-Control-Allow-Origin'] = '\'' + policy.allowOrigin + '\'';
 
         // Set allow-credentials header on all GET responses as these will not be preflighted
-        if (endpoint.method === 'GET' && !_.isUndefined(policy.allowCredentials)) {
+        if (populatedEndpoint.method === 'GET' && !_.isUndefined(policy.allowCredentials)) {
           response.responseParameters['method.response.header.Access-Control-Allow-Credentials'] = '\'' + policy.allowCredentials + '\'';
         }
       });
+
+      endpoint.set(populatedEndpoint);
 
       return Promise.resolve(evt);
     }
