@@ -3,26 +3,26 @@
 /**
  * Serverless CORS Plugin
  */
-module.exports = function(SPlugin, serverlessPath) {
+module.exports = function(S) {
   const _ = require('lodash'),
     path = require('path'),
     Joi = require('joi'),
     Promise = require('bluebird'),
-    SError = require(path.join(serverlessPath, 'ServerlessError')),
-    SUtils = require(path.join(serverlessPath, 'utils'));
+    SError = require(S.getServerlessPath('ServerlessError')),
+    project = S.getProject();
 
-  class ServerlessCors extends SPlugin {
+  class ServerlessCors extends S.classes.Plugin {
     static getName() {
       return 'com.joostfarla.' + ServerlessCors.name;
     }
 
     registerHooks() {
-      this.S.addHook(this.addCorsHeaders.bind(this), {
+      S.addHook(this.addCorsHeaders.bind(this), {
         action: 'endpointBuildApiGateway',
         event: 'pre'
       });
 
-      this.S.addHook(this.addPreflightRequests.bind(this), {
+      S.addHook(this.addPreflightRequests.bind(this), {
         action: 'endpointDeploy',
         event: 'pre'
       });
@@ -32,19 +32,19 @@ module.exports = function(SPlugin, serverlessPath) {
 
     addCorsHeaders(evt) {
       let policy,
-        endpoint = this.S.state.getEndpoints({ paths: [evt.options.path] })[0],
+        endpoint = project.getEndpoint(evt.options.name),
         populatedEndpoint = endpoint.getPopulated({
           stage: evt.options.stage,
           region: evt.options.region
         });
 
       // Skip preflight requests or when CORS is not enabled
-      if (populatedEndpoint.method === 'OPTIONS' || !this._isCorsEnabled(endpoint)) {
+      if (populatedEndpoint.method === 'OPTIONS' || !this._isCorsEnabled(endpoint, evt.options.stage, evt.options.region)) {
         return Promise.resolve(evt);
       }
 
       try {
-        policy = this._getEndpointPolicy(endpoint);
+        policy = this._getEndpointPolicy(endpoint, evt.options.stage, evt.options.region);
       } catch (err) {
         return Promise.reject(err);
       }
@@ -70,11 +70,11 @@ module.exports = function(SPlugin, serverlessPath) {
 
     addPreflightRequests(evt) {
       let _this = this,
-        endpoints = _this.S.state.getEndpoints(),
+        endpoints = project.getAllEndpoints(),
         paths = _.map(
-          _.uniqBy(endpoints, 'path'),
-          endpoint => endpoint.path
-        );
+            _.uniqBy(endpoints, 'path'),
+            endpoint => endpoint.path
+    );
 
       // Only deploy prefight endpoints when 'all' flag is used.
       if (evt.options.all !== true) {
@@ -86,12 +86,12 @@ module.exports = function(SPlugin, serverlessPath) {
           allowMethods = [];
 
         _.each(_.filter(endpoints, { 'path': path }), function(endpoint) {
-          if (!_this._isCorsEnabled(endpoint)) {
+          if (!_this._isCorsEnabled(endpoint, evt.options.stage, evt.options.region)) {
             return;
           }
 
           // @todo handle different configurations within same path
-          policy = _this._getEndpointPolicy(endpoint);
+          policy = _this._getEndpointPolicy(endpoint, evt.options.stage, evt.options.region);
           func = endpoint.getFunction();
 
           allowMethods.push(endpoint.method);
@@ -101,9 +101,10 @@ module.exports = function(SPlugin, serverlessPath) {
           return Promise.resolve(evt);
         }
 
-        preflightEndpoint = new _this.S.classes.Endpoint(_this.S, {
-          sPath: func._config.sPath + '@' + path + '~OPTIONS'
-        });
+        preflightEndpoint = new S.classes.Endpoint({
+          path: path,
+          method: 'OPTIONS'
+        }, func);
 
         preflightEndpoint.type = 'MOCK';
         preflightEndpoint.requestTemplates = {
@@ -137,23 +138,23 @@ module.exports = function(SPlugin, serverlessPath) {
           response.responseParameters['method.response.header.Access-Control-Max-Age'] = '\'' + policy.maxAge + '\'';
         }
 
-        func.endpoints.push(preflightEndpoint);
+        func.setEndpoint(preflightEndpoint);
       });
 
       return Promise.resolve(evt);
     }
 
-    _isCorsEnabled(endpoint) {
-      return !_.isUndefined(endpoint.getFunction().getComponent().custom.cors) ||
-        !_.isUndefined(endpoint.getFunction().custom.cors);
+    /**
+     * Check CORS is enabled on function
+     * - Function must first be populated
+     **/
+
+    _isCorsEnabled(endpoint, stage, region) {
+      return !_.isUndefined(endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors);
     }
 
-    _getEndpointPolicy(endpoint) {
-      let policy = _.merge({},
-        endpoint.getFunction().getComponent().custom.cors,
-        endpoint.getFunction().custom.cors
-      );
-
+    _getEndpointPolicy(endpoint, stage, region) {
+      let policy = endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors;
       let schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
         allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[\w-]+$/)),
