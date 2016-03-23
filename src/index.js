@@ -146,12 +146,17 @@ module.exports = function(S) {
 
     /**
      * Check CORS is enabled on function
-     * - Function must first be populated
-     **/
+     * - Function must first be populated, in case cors settings are in templates
+     */
 
     _isCorsEnabled(endpoint, stage, region) {
       return !_.isUndefined(endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors);
     }
+
+    /**
+     * Get endpoint's CORS policy
+     * - Function must first be populated, in case cors settings are in templates
+     */
 
     _getEndpointPolicy(endpoint, stage, region) {
       let policy = endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors;
