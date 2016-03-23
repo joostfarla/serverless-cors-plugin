@@ -3,7 +3,7 @@
 A Serverless Plugin for the [Serverless Framework](http://www.serverless.com) which
 adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)).
 
-[![serverless](http://public.serverless.com/badges/v1.svg)](http://www.serverless.com)
+[![serverless](http://public.serverless.com/badges/v2.svg)](http://www.serverless.com)
 [![npm version](https://badge.fury.io/js/serverless-cors-plugin.svg)](https://badge.fury.io/js/serverless-cors-plugin)
 [![Build Status](https://travis-ci.org/joostfarla/serverless-cors-plugin.svg?branch=develop)](https://travis-ci.org/joostfarla/serverless-cors-plugin)
 [![Dependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin)
