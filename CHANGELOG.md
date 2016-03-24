@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0
+
+* Made compatible with Serverless v0.5
+
 ## 0.3.2
 
 * Support templating
