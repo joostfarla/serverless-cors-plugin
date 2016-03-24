@@ -9,7 +9,7 @@ adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/
 [![Dependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin)
 [![DevDependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin/dev-status.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin#info=devDependencies)
 
-**THIS PLUGIN REQUIRES SERVERLESS V0.4 OR HIGHER!**
+**THIS PLUGIN REQUIRES SERVERLESS V0.5 OR HIGHER!**
 
 ## Introduction
 
@@ -44,6 +44,7 @@ Serverless version | Plugin version
 v0.1 | v0.1
 v0.2-v0.3 | v0.2
 v0.4 | v0.3
+v0.4 | v0.4
 
 ## Usage
 
@@ -58,9 +59,7 @@ Add the following properties to `s-function.json` to configure a CORS-policy:
 }
 ```
 
-The `allowOrigin` property is required, the other headers are optional. You can also add this
-configuration to `s-component.json` instead of `s-function.json` to apply the CORS-policy
-to all functions within the component.
+The `allowOrigin` property is required, the other headers are optional.
 
 Run `endpoint deploy` and the CORS headers and preflight endpoints will dynamically
 be configured and deployed. Use the `--all` flag to deploy pre-flight OPTIONS endpoints.
@@ -85,7 +84,6 @@ For more information, read the [CORS documentation](https://developer.mozilla.or
 * Dynamically set origin headers (#2)
 * Add more verbose (debugging) output
 * Better support for authenticated requests
-* Auto-cleanup removed preflight endpoints
 
 ## License
 
