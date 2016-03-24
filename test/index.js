@@ -4,38 +4,41 @@ const path = require('path'),
   chai = require('chai'),
   should = chai.should(),
   chaiAsPromised = require('chai-as-promised'),
-  SERVERLESS_PATH = path.join(process.cwd(), 'node_modules', 'serverless', 'lib'),
-  Serverless = require(path.join(SERVERLESS_PATH, 'Serverless')),
-  utils = require(path.join(SERVERLESS_PATH, 'utils'));
+  Serverless = require('serverless');
 
 chai.use(chaiAsPromised);
 
-const CorsPlugin = require('..')(
-  require(path.join(SERVERLESS_PATH, 'ServerlessPlugin')),
-  SERVERLESS_PATH
-);
-
-let s, plugin;
+let s, plugin, CorsPlugin;
 
 describe('ServerlessCors', function() {
-  before(function() {
+  beforeEach(function(done) {
     this.timeout(0);
 
     s = new Serverless();
-    s.config.projectPath = '.';
-    s.state.meta.set({
-      stages: {
-        dev: { regions: { 'eu-west-1': {} } }
-      }
-    });
 
-    plugin = new CorsPlugin(s);
-    s.addPlugin(plugin);
+    s.init().then(function() {
+      CorsPlugin = require('..')(s);
+      plugin = new CorsPlugin(s);
+
+      s.addPlugin(plugin);
+      s.config.projectPath = __dirname;
+      s.setProject(new s.classes.Project({
+        stages: {
+          dev: { regions: { 'eu-west-1': {} }}
+        },
+        variables: {
+          stage: 'dev',
+          region: 'eu-west-1'
+        }
+      }));
+
+      done();
+    });
   });
 
   describe('#getName()', function() {
     it('should return the correct name', function() {
-      CorsPlugin.getName().should.equal('com.joostfarla.ServerlessCors');
+      CorsPlugin.getName().should.equal('ServerlessCors');
     });
   });
 
@@ -50,72 +53,67 @@ describe('ServerlessCors', function() {
 
   describe('#addCorsHeaders()', function() {
     it('should not add any headers when cors is not configured', function(done) {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction'),
+        endpoint = s.getProject().getEndpoint('someFunction~GET');
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
-        let endpoint = s.state.getEndpoints({ paths: [ endpointPath ] })[0],
-          headers = endpoint.responses.default.responseParameters;
-
+        const headers = endpoint.responses.default.responseParameters;
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Origin');
         done();
       });
     });
 
     it('should fail when "allowOrigin" setting is missing', function() {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction');
 
-      obj.function.custom.cors = {};
+      func.custom.cors = {};
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
 
     it('should fail when "allowOrigin" setting is invalid', function() {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction');
 
-      obj.function.custom.cors = { allowOrigin: true };
+      func.custom.cors = { allowOrigin: true };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
 
     it('should fail when "allowHeaders" setting is invalid', function() {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction');
 
-      obj.function.custom.cors = {
+      func.custom.cors = {
         allowOrigin: '*',
         allowHeaders: 'Value-That-Is-Not-An-Array'
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
       }).should.be.rejected;
     });
 
     it('should add an "Access-Control-Allow-Origin" header when "allowOrigin" is set', function(done) {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction'),
+        endpoint = s.getProject().getEndpoint('someFunction~GET');
 
-      obj.function.custom.cors = {
+      func.custom.cors = {
         allowOrigin: '*',
         allowHeaders: ['Header-X', 'Header-Y']
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
-        let headers = obj.endpoint.responses.default.responseParameters;
+        const headers = endpoint.responses.default.responseParameters;
         headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Methods');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Headers');
@@ -127,40 +125,40 @@ describe('ServerlessCors', function() {
     });
 
     it('should add an "Access-Control-Allow-Credentials" header to GET function when "allowCredentials" is set', function(done) {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction'),
+        endpoint = s.getProject().getEndpoint('someFunction~GET');
 
-      obj.function.custom.cors = {
+      func.custom.cors = {
         allowOrigin: 'http://function.test',
         allowCredentials: true
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
-        let headers = obj.endpoint.responses.default.responseParameters;
+        const headers = endpoint.responses.default.responseParameters;
         headers['method.response.header.Access-Control-Allow-Credentials'].should.equal('\'true\'');
         done();
       });
     });
 
     it('should preserve existing headers when cors is configured for function', function(done) {
-      let endpointPath = 'someComponent/someFunction@resource~GET',
-        obj = _bootstrapEndpoint('someComponent/someFunction@resource~GET');
+      const func = _bootstrapEndpoint('someFunction'),
+        endpoint = s.getProject().getEndpoint('someFunction~GET');
 
-      obj.function.custom.cors = {
+      func.custom.cors = {
         allowOrigin: '*',
         allowHeaders: ['Header-X', 'Header-Y']
       };
 
-      obj.endpoint.responses.default.responseParameters = {
+      endpoint.responses.default.responseParameters = {
         'Some-Header': 'Some-Value'
       };
 
       plugin.addCorsHeaders({
-        options: { path: endpointPath, stage: 'dev', region: 'eu-west-1' }
+        options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
-        let headers = obj.endpoint.responses.default.responseParameters;
+        let headers = endpoint.responses.default.responseParameters;
         headers['Some-Header'].should.equal('Some-Value');
         headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
         headers.should.not.contain.key('method.response.header.Access-Control-Allow-Methods');
@@ -176,24 +174,19 @@ describe('ServerlessCors', function() {
 });
 
 function _bootstrapEndpoint(path) {
-  let obj = {},
-    parsed = utils.parseSPath(path);
-
-  obj.component = new s.classes.Component(s, {
-    sPath: parsed.component
+  const func = new s.classes.Function({
+    endpoints: [{
+      path: path,
+      responses: {
+        default: {
+          statusCode: '200',
+          responseParameters: {}
+        }
+      }
+    }]
   });
 
-  obj.function = new s.classes.Function(s, {
-    sPath: parsed.component + '/' + parsed.function
-  });
+  s.getProject().setFunction(func);
 
-  obj.endpoint = new s.classes.Endpoint(s, {
-    sPath: parsed.component + '/' + parsed.function + '@' + parsed.urlPath + '~' + parsed.urlMethod
-  });
-
-  s.state.setAsset(obj.component);
-  s.state.setAsset(obj.function);
-  s.state.setAsset(obj.endpoint);
-
-  return obj;
+  return func;
 }

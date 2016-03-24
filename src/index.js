@@ -8,14 +8,9 @@ module.exports = function(S) {
     path = require('path'),
     Joi = require('joi'),
     Promise = require('bluebird'),
-    SError = require(S.getServerlessPath('ServerlessError')),
-    project = S.getProject();
+    SError = require(S.getServerlessPath('Error'));
 
   class ServerlessCors extends S.classes.Plugin {
-    static getName() {
-      return 'com.joostfarla.' + ServerlessCors.name;
-    }
-
     registerHooks() {
       S.addHook(this.addCorsHeaders.bind(this), {
         action: 'endpointBuildApiGateway',
@@ -32,8 +27,8 @@ module.exports = function(S) {
 
     addCorsHeaders(evt) {
       let policy,
-        endpoint = project.getEndpoint(evt.options.name),
-        populatedEndpoint = endpoint.getPopulated({
+        endpoint = S.getProject().getEndpoint(evt.options.name),
+        populatedEndpoint = endpoint.toObjectPopulated({
           stage: evt.options.stage,
           region: evt.options.region
         });
@@ -63,23 +58,18 @@ module.exports = function(S) {
         }
       });
 
-      endpoint.set(populatedEndpoint);
+      endpoint.fromObject(populatedEndpoint);
 
       return Promise.resolve(evt);
     }
 
     addPreflightRequests(evt) {
       let _this = this,
-        endpoints = project.getAllEndpoints(),
+        endpoints = S.getProject().getAllEndpoints(),
         paths = _.map(
-            _.uniqBy(endpoints, 'path'),
-            endpoint => endpoint.path
-    );
-
-      // Only deploy prefight endpoints when 'all' flag is used.
-      if (evt.options.all !== true) {
-        return Promise.resolve(evt);
-      }
+          _.uniqBy(endpoints, 'path'),
+          endpoint => endpoint.path
+        );
 
       _.each(paths, function(path) {
         let policy, func, preflightEndpoint, response,
@@ -103,13 +93,12 @@ module.exports = function(S) {
 
         preflightEndpoint = new S.classes.Endpoint({
           path: path,
-          method: 'OPTIONS'
+          method: 'OPTIONS',
+          type: 'MOCK',
+          requestTemplates: {
+            'application/json': '{"statusCode": 200}'
+          }
         }, func);
-
-        preflightEndpoint.type = 'MOCK';
-        preflightEndpoint.requestTemplates = {
-          'application/json': '{"statusCode": 200}'
-        };
 
         if (preflightEndpoint.responses[400]) {
           delete preflightEndpoint.responses[400];
@@ -150,7 +139,12 @@ module.exports = function(S) {
      */
 
     _isCorsEnabled(endpoint, stage, region) {
-      return !_.isUndefined(endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors);
+      const options = {
+        stage: stage,
+        region: region
+      };
+
+      return !_.isUndefined(endpoint.getFunction().toObjectPopulated(options).custom.cors);
     }
 
     /**
@@ -159,8 +153,14 @@ module.exports = function(S) {
      */
 
     _getEndpointPolicy(endpoint, stage, region) {
-      let policy = endpoint.getFunction().toObjectPopulated({stage, region}).custom.cors;
-      let schema = Joi.object().keys({
+      const options = {
+        stage: stage,
+        region: region
+      };
+
+      const policy = endpoint.getFunction().toObjectPopulated(options).custom.cors;
+
+      const schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
         allowHeaders: Joi.array().min(1).items(Joi.string().regex(/^[\w-]+$/)),
         allowCredentials: Joi.boolean(),
