@@ -71,6 +71,11 @@ module.exports = function(S) {
           endpoint => endpoint.path
         );
 
+      // Only deploy prefight endpoints when 'all' flag is used.
+      if (evt.options.all !== true) {
+        return Promise.resolve(evt);
+      }
+
       _.each(paths, function(path) {
         let policy, func, preflightEndpoint, response,
           allowMethods = [];
