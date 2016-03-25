@@ -27,6 +27,7 @@ describe('ServerlessCors', function() {
           dev: { regions: { 'eu-west-1': {} }}
         },
         variables: {
+          project: 'serverless-project',
           stage: 'dev',
           region: 'eu-west-1'
         }
