@@ -11,6 +11,10 @@ module.exports = function(S) {
     SError = require(S.getServerlessPath('Error'));
 
   class ServerlessCors extends S.classes.Plugin {
+    static getName() {
+      return 'com.joostfarla.' + ServerlessCors.name;
+    }
+
     registerHooks() {
       S.addHook(this.addCorsHeaders.bind(this), {
         action: 'endpointBuildApiGateway',

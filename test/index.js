@@ -39,7 +39,7 @@ describe('ServerlessCors', function() {
 
   describe('#getName()', function() {
     it('should return the correct name', function() {
-      CorsPlugin.getName().should.equal('ServerlessCors');
+      CorsPlugin.getName().should.equal('com.joostfarla.ServerlessCors');
     });
   });
 
