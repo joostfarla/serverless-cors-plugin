@@ -64,6 +64,9 @@ The `allowOrigin` property is required, the other headers are optional.
 Run `endpoint deploy` and the CORS headers will dynamically be configured and deployed.
 Use the `-a` / `--all` flag to deploy pre-flight OPTIONS endpoints.
 
+*Caution: you will probably notice some warnings on missing `stage` and `region`
+template variables. These can be ignored until the [issue](https://github.com/joostfarla/serverless-cors-plugin/issues/19#issuecomment-200816508) is fixed.*
+
 ## Options
 
 These are all options you can use:
