@@ -3,6 +3,7 @@
 ## 0.4.0
 
 * Made compatible with Serverless v0.5
+* Completed tests
 
 ## 0.3.2
 

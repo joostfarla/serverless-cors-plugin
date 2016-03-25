@@ -80,7 +80,6 @@ For more information, read the [CORS documentation](https://developer.mozilla.or
 
 ## Roadmap
 
-* Complete tests
 * Dynamically set origin headers (#2)
 * Add more verbose (debugging) output
 * Better support for authenticated requests
