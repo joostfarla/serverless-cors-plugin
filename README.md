@@ -59,7 +59,9 @@ Add the following properties to `s-function.json` to configure a CORS-policy:
 }
 ```
 
-The `allowOrigin` property is required, the other headers are optional.
+The `allowOrigin` property is required, the other headers are optional. You can also add this
+configuration to `s-project.json` instead of `s-function.json` to apply the CORS-policy
+project-wide.
 
 Run `endpoint deploy` and the CORS headers will dynamically be configured and deployed.
 Use the `-a` / `--all` flag to deploy pre-flight OPTIONS endpoints.

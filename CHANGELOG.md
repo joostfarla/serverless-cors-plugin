@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+* Allow setting CORS configuration on project level
+
 ## 0.4.0
 
 * Made compatible with Serverless v0.5

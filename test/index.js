@@ -243,6 +243,58 @@ describe('ServerlessCors', function() {
         done();
       });
     });
+
+    it('should allow setting CORS settings on the project level', function(done) {
+      const func = _bootstrapEndpoint('someFunction', 'GET');
+
+      s.getProject().custom.cors = {
+        allowOrigin: '*',
+        allowHeaders: ['Header-X', 'Header-Y']
+      };
+
+      plugin.addPreflightRequests({
+        options: { all: true, stage: 'dev', region: 'eu-west-1' }
+      }).then(function(evt) {
+        const endpoint = s.getProject().getEndpoint('someFunction~OPTIONS'),
+          headers = endpoint.responses.default.responseParameters;
+        endpoint.should.be.an.instanceof(s.classes.Endpoint);
+        endpoint.type.should.equal('MOCK');
+        headers['method.response.header.Access-Control-Allow-Methods'].should.equal('\'GET\'');
+        headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
+        headers['method.response.header.Access-Control-Allow-Headers'].should.equal('\'Header-X,Header-Y\'');
+        done();
+      });
+    });
+  });
+
+  it('should allow overriding CORS settings on the function level', function(done) {
+    const func = _bootstrapEndpoint('someFunction', 'GET'),
+      funcOverride = _bootstrapEndpoint('someOtherFunction', 'GET');
+
+    s.getProject().custom.cors = {
+      allowOrigin: '*',
+      allowHeaders: ['Header-X', 'Header-Y']
+    };
+
+    funcOverride.custom.cors = {
+      allowHeaders: ['Header-X', 'Header-Y', 'Header-Z']
+    };
+
+    plugin.addPreflightRequests({
+      options: { all: true, stage: 'dev', region: 'eu-west-1' }
+    }).then(function(evt) {
+      const endpoint = s.getProject().getEndpoint('someFunction~OPTIONS'),
+        endpointOverride = s.getProject().getEndpoint('someOtherFunction~OPTIONS'),
+        headers = endpoint.responses.default.responseParameters,
+        headersOverride = endpointOverride.responses.default.responseParameters;
+      headers['method.response.header.Access-Control-Allow-Methods'].should.equal('\'GET\'');
+      headers['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
+      headers['method.response.header.Access-Control-Allow-Headers'].should.equal('\'Header-X,Header-Y\'');
+      headersOverride['method.response.header.Access-Control-Allow-Methods'].should.equal('\'GET\'');
+      headersOverride['method.response.header.Access-Control-Allow-Origin'].should.equal('\'*\'');
+      headersOverride['method.response.header.Access-Control-Allow-Headers'].should.equal('\'Header-X,Header-Y,Header-Z\'');
+      done();
+    });
   });
 });
 

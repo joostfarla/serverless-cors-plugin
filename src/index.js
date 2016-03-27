@@ -153,7 +153,8 @@ module.exports = function(S) {
         region: region
       };
 
-      return !_.isUndefined(endpoint.getFunction().toObjectPopulated(options).custom.cors);
+      return !_.isUndefined(S.getProject().toObjectPopulated(options).custom.cors) ||
+        !_.isUndefined(endpoint.getFunction().toObjectPopulated(options).custom.cors);
     }
 
     /**
@@ -167,7 +168,10 @@ module.exports = function(S) {
         region: region
       };
 
-      const policy = endpoint.getFunction().toObjectPopulated(options).custom.cors;
+      const policy = _.merge({},
+        S.getProject().toObjectPopulated(options).custom.cors,
+        endpoint.getFunction().toObjectPopulated(options).custom.cors
+      );
 
       const schema = Joi.object().keys({
         allowOrigin: Joi.string().required(),
