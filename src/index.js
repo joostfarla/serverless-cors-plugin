@@ -68,8 +68,9 @@ module.exports = function(S) {
     }
 
     addPreflightRequests(evt) {
-      let _this = this,
+      const _this = this,
         endpoints = S.getProject().getAllEndpoints(),
+        pathParamRegex = /{([^}]+)}/g,
         paths = _.map(
           _.uniqBy(endpoints, 'path'),
           endpoint => endpoint.path
@@ -81,7 +82,7 @@ module.exports = function(S) {
       }
 
       _.each(paths, function(path) {
-        let policy, func, preflightEndpoint, response,
+        let policy, func, preflightEndpoint, response, pathParam,
           allowMethods = [];
 
         _.each(_.filter(endpoints, { 'path': path }), function(endpoint) {
@@ -104,10 +105,15 @@ module.exports = function(S) {
           path: path,
           method: 'OPTIONS',
           type: 'MOCK',
+          requestParameters: {},
           requestTemplates: {
             'application/json': '{"statusCode": 200}'
           }
         }, func);
+
+        while ((pathParam = pathParamRegex.exec(path)) !== null) {
+          preflightEndpoint.requestParameters['integration.request.path.' + pathParam[1]] = 'method.request.path.' + pathParam[1];
+        }
 
         if (preflightEndpoint.responses[400]) {
           delete preflightEndpoint.responses[400];
