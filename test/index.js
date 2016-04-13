@@ -146,17 +146,17 @@ describe('ServerlessCors', function() {
     it('should add an "Access-Control-Expose-Headers" header to function when "exposeHeaders" is set', function(done) {
       const func = _bootstrapEndpoint('someFunction', 'GET'),
         endpoint = s.getProject().getEndpoint('someFunction~GET');
-      const nonStandardHeader = 'Content-length'
+      const nonStandardExposedHeader = 'Content-length';
       func.custom.cors = {
         allowOrigin: 'http://function.test',
-        exposeHeaders: [nonStandardHeader]
+        exposeHeaders: [nonStandardExposedHeader]
       };
 
       plugin.addCorsHeaders({
         options: { name: 'someFunction~GET', stage: 'dev', region: 'eu-west-1' }
       }).then(function(evt) {
         const headers = endpoint.responses.default.responseParameters;
-        headers['method.response.header.Access-Control-Expose-Headers'].should.contain(nonStandardHeader);
+        headers['method.response.header.Access-Control-Expose-Headers'].should.contain(nonStandardExposedHeader);
         done();
       });
     });
