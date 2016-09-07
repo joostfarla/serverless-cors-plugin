@@ -112,6 +112,16 @@ module.exports = function(S) {
           requestParameters: {},
           requestTemplates: {
             'application/json': '{"statusCode": 200}'
+          },
+          responses: {
+            default: {
+              statusCode: "200",
+              responseParameters: {},
+              responseModels: {},
+              responseTemplates: {
+                "application/json": ""
+              }
+            }
           }
         }, func);
 
