@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+
+* Fix compatibility with model plugin
+
 ## 0.4.2
 
 * Add request parameter mapping(s) for preflighted endpoint
