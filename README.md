@@ -9,7 +9,9 @@ adds support for CORS ([Cross-origin resource sharing](https://en.wikipedia.org/
 [![Dependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin)
 [![DevDependencies Status](https://david-dm.org/joostfarla/serverless-cors-plugin/dev-status.svg)](https://david-dm.org/joostfarla/serverless-cors-plugin#info=devDependencies)
 
-**THIS PLUGIN REQUIRES SERVERLESS V0.5 OR HIGHER!**
+**THIS PLUGIN IS NOT COMPATIBLE WITH SERVERLESS V1.0 OR HIGHER!**
+
+Serverless has [native CORS support](https://serverless.com/framework/docs/providers/aws/events/apigateway/#enabling-cors) since v1.0.
 
 ## Introduction
 
